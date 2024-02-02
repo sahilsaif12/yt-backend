@@ -1,1 +1,1 @@
-export const DB_NAME = 'yt stream'
+export const DB_NAME = 'yt-stream'
