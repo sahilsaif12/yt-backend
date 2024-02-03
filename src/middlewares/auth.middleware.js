@@ -8,9 +8,9 @@ const verifyJwt=async(req, res, next)=>{
         throw new ApiError(401,"No access token available")
     }
     
-    const decordedToken=await jwt.verify(accessToken,process.env.ACCESS_TOKEN_SECRET_KEY)
+    const decodedToken=await jwt.verify(accessToken,process.env.ACCESS_TOKEN_SECRET_KEY)
 
-    const user = await User.findById(decordedToken?._id)
+    const user = await User.findById(decodedToken?._id)
     if (!user) {
         throw new ApiError(401,"Unauthorized token")
     }
