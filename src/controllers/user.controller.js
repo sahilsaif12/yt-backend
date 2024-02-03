@@ -227,10 +227,60 @@ const changeCurrentPassword=asyncHandler(async(req, res)=>{
     )
 })
 
+const getCurrentUser=asyncHandler(async (req, res) =>{
+    const user = req.user
+    res.status(200)
+    .json(
+        new ApiResponse(200,{
+            email:user.email,
+            fullName:user.fullName,
+            username:user.username,
+            avatar:user.avatar,
+            coverImage:user.coverImage,
+        },
+        "User details fetched successfully")
+    )
+})
+
+const updateAccountDetails=asyncHandler(async(req, res)=>{
+    const{email,fullName,username}=req.body
+    if(!(email || fullName || username)){
+        throw new ApiError(400,"edited account details can't be blank")
+    }
+    const fieldsToUpdate={}
+    if (email?.trim()!="") fieldsToUpdate.email=email
+    if (fullName?.trim()!="") fieldsToUpdate.fullName=fullName
+    if (username?.toLowerCase().trim()!=""){
+        const existedUsername=await User.findOne({username})
+        if (existedUsername) {
+            throw new ApiError(400,"that username already exists, please try another")
+        }else{
+            fieldsToUpdate.username=username
+        }
+    }
+    
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: fieldsToUpdate
+        },
+        {new:true}
+    ).select("-password -refreshToken")
+    
+    res.status(200)
+    .json(
+        new ApiResponse(200,user,"field are updated successfully")
+    )
+
+
+
+})
 export {
     registerUser,
     loginUser,
     logoutUser,
     refreshAccessToken,
-    changeCurrentPassword
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails
 }
