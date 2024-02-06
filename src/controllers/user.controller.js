@@ -239,6 +239,7 @@ const getCurrentUser=asyncHandler(async (req, res) =>{
             username:user.username,
             avatar:user.avatar,
             coverImage:user.coverImage,
+            watchHistory:user.watchHistory
         },
         "User details fetched successfully")
     )
@@ -435,7 +436,13 @@ const getWatchHistory=asyncHandler(async(req, res)=>{
                         }
                     }
                 ]
-            }
+            },
+        },
+        // check or problem may occur while implementing pagination 
+        {
+            $project: {
+                watchHistory: { $reverseArray: '$watchHistory' }
+              }
         }
     ])
 

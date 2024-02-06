@@ -1,3 +1,4 @@
+import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -19,7 +20,7 @@ const postVideo=asyncHandler(async(req, res)=>{
     }
     
     const video=await uploadOnCloudinary(videoLocalPath)
-    console.log(video);
+    // console.log(video);
     if(!video) {
         if (thumbnailLocalPath) fs.unlinkSync(thumbnailLocalPath)
         throw new ApiError(400,"video file error while uploading in cloudinary")
@@ -51,6 +52,40 @@ const postVideo=asyncHandler(async(req, res)=>{
     )
 })
 
+const updateViewsCount=asyncHandler(async(req,res)=>{
+    const {videoId}=req.params
+    
+    const video=await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $inc:{views:1}
+        },
+        {new:true}
+    ).select("_id title views")
+
+    if(!video.views){
+        throw new ApiError(404,"video not found with this videoId")
+    }
+
+    await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $push:{
+                watchHistory:{
+                    $each:[videoId],
+                    $position:0
+                }
+            }
+        }
+    )
+
+    res.status(200)
+    .json(
+        new ApiResponse(200,video,"video view count increased and added to current user's watch history successfully")
+    )
+
+})
 export {
-    postVideo
+    postVideo,
+    updateViewsCount
 }
