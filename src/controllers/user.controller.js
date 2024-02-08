@@ -99,7 +99,7 @@ const loginUser=asyncHandler(async (req, res) => {
     //* 6.send res and add cookie
 
     const {email,password,username} =  req.body
-    console.log(email);
+    // console.log(email);
     if(!(email||username)) {
         throw new ApiError(400,"username or email required must")
         // if (!username) {
@@ -341,13 +341,13 @@ const updateUserCoverImage=asyncHandler(async(req, res)=>{
 })
 
 const getUserChannelProfile=asyncHandler(async (req, res) =>{
-    const {username}=req.params
+    const {channelId}=req.params
 
-    if(!username?.trim()) throw new ApiError(404, "Username not found")
+    if(channelId?.trim()==="") throw new ApiError(404, "channel id is missing")
 
     const channelDetails =await User.aggregate([
         {
-            $match:{username: username.toLowerCase().trim()}
+            $match:{_id: new mongoose.Types.ObjectId(channelId)}
         },
         {
             $lookup:{
@@ -394,7 +394,8 @@ const getUserChannelProfile=asyncHandler(async (req, res) =>{
                 subscribingCount:1,
                 isCurrentUserSubscribed:1
             }
-        }
+        },
+
     ])
 
     if (channelDetails?.length==0) {
@@ -402,7 +403,7 @@ const getUserChannelProfile=asyncHandler(async (req, res) =>{
     }
     res.status(200)
     .json(
-        new ApiResponse(200,channelDetails,"Channel details fetched successfully")
+        new ApiResponse(200,channelDetails[0],"Channel details fetched successfully")
     )
 })
 

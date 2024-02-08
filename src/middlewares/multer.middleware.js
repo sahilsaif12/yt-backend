@@ -10,7 +10,7 @@ const storage = multer.diskStorage({
       const extension = mime.extension(file.mimetype);
 
       // console.log(file);
-      cb(null, file.fieldname + '-' + uniqueSuffix+"."+extension)
+      cb(null, file?.fieldname + '-' + uniqueSuffix+"."+extension)
     }
   })
   

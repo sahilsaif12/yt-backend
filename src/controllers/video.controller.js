@@ -1,9 +1,11 @@
+import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
+import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
-
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
+import fs from 'fs'
 
 const postVideo=asyncHandler(async(req, res)=>{
     const {title,description,tags} = req.body
@@ -85,7 +87,128 @@ const updateViewsCount=asyncHandler(async(req,res)=>{
     )
 
 })
+
+const getVideoById=asyncHandler(async(req,res) => {
+    const {videoId}=req.params
+    if (videoId.trim()=="") {
+        throw new ApiError(400,"video Id is missing")
+    }
+
+    const videoDetails=await Video.aggregate([
+        {
+            $match:{_id:new mongoose.Types.ObjectId(videoId)}
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"owner",
+                foreignField:"_id",
+                as:"owner",
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"subscriptions",
+                            localField:"_id",
+                            foreignField:"subscribedChannel",
+                            as:"subscribers"
+                        }
+                    },
+                    {
+                        $addFields:{
+                            subscribersCount:{
+                                $size:"$subscribers"
+                            },
+                            isCurrentUserSubscribed:{
+                                $cond:{
+                                    if:{
+                                        $in:[req.user?._id,"$subscribers.subscriber"]
+                                    },
+                                    then:true,
+                                    else:false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $project:{
+                            fullName:1,
+                            username:1,
+                            avatar:1,
+                            subscribersCount:1,
+                            isCurrentUserSubscribed:1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind:"$owner"
+        }
+    ])
+
+    if (videoDetails?.length==0) {
+        throw new ApiError(400,"video id wrong or something went wrong while fetching video details")
+    }
+
+    res.status(200)
+    .json(
+        new ApiResponse(200,videoDetails[0],"video details fetched successfully")
+    )
+})
+
+const updateVideo=asyncHandler( async(req, res)=> {
+    const{title,description,tags,ownerId,oldThumbnailUrl} = req.body
+    const{videoId}=req.params
+
+    if (videoId.trim()=="") {
+        throw new ApiError(400,"video Id is missing")
+    }else{
+        if (ownerId!=req.user?._id) {
+            throw new ApiError(401,"you are not owner and not authorized to update this video")
+        }
+    }
+
+    if (title?.trim()=="") {
+        throw new ApiError(400,"title cannot be empty")
+    }
+
+    const updateFields={}
+
+    if(title) updateFields.title = title
+    if(description) updateFields.description = description
+    if(tags) updateFields.tags = tags
+
+    const localThumbnailPath=req.file?.path
+    if (localThumbnailPath) {
+        const thumbnail=await uploadOnCloudinary(localThumbnailPath)
+        if (!thumbnail) {
+            fs.unlinkSync(localThumbnailPath)
+            throw new ApiError(400,"thumbnail file error in uploading in cloudinary")
+        }
+        updateFields.thumbnail=thumbnail.url
+        deleteFromCloudinary(oldThumbnailUrl)
+    }
+
+    const videoDetails=await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $set:updateFields
+        },
+        {new:true}
+    )
+
+    if (!videoDetails) {
+        throw new ApiError(404,"video not found or wrong video id")
+    }
+
+    res.status(200)
+    .json(
+        new ApiResponse(200,videoDetails,"video details updated successfully")
+    )
+})
 export {
     postVideo,
-    updateViewsCount
+    updateViewsCount,
+    getVideoById,
+    updateVideo
 }
