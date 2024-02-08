@@ -160,14 +160,13 @@ const updateVideo=asyncHandler( async(req, res)=> {
     const{title,description,tags,ownerId,oldThumbnailUrl} = req.body
     const{videoId}=req.params
 
-    if (videoId.trim()=="") {
+    if (videoId.trim()==="") {
         throw new ApiError(400,"video Id is missing")
-    }else{
-        if (ownerId!=req.user?._id) {
-            throw new ApiError(401,"you are not owner and not authorized to update this video")
-        }
     }
-
+    if (ownerId!=req.user?._id) {
+        throw new ApiError(401,"you are not owner and not authorized to update this video")
+    }
+    
     if (title?.trim()=="") {
         throw new ApiError(400,"title cannot be empty")
     }
@@ -180,7 +179,7 @@ const updateVideo=asyncHandler( async(req, res)=> {
 
     const localThumbnailPath=req.file?.path
     if (localThumbnailPath) {
-        const thumbnail=await uploadOnCloudinary(localThumbnailPath)
+        const thumbnail=await uploadOnCloudinary(localThumbnailPath,"image")
         if (!thumbnail) {
             fs.unlinkSync(localThumbnailPath)
             throw new ApiError(400,"thumbnail file error in uploading in cloudinary")
@@ -206,9 +205,32 @@ const updateVideo=asyncHandler( async(req, res)=> {
         new ApiResponse(200,videoDetails,"video details updated successfully")
     )
 })
+
+const deleteVideo=asyncHandler(async(req,res)=>{
+    const{videoId}=req.params
+    const{ownerId,videoUrl,thumbnailUrl}=req.body
+    if (ownerId!=req.user?._id) {
+        throw new ApiError(401,"you are not owner and not authorized to delete this video")
+    }
+
+    await Video.findByIdAndDelete(videoId)
+
+    if (videoUrl) {
+        deleteFromCloudinary(videoUrl,"video")
+    }
+    if (thumbnailUrl) {
+        deleteFromCloudinary(thumbnailUrl,"image")
+    }
+
+    res.status(200)
+    .json(
+        new ApiResponse(200,{},"video deleted successfully")
+    )
+})
 export {
     postVideo,
     updateViewsCount,
     getVideoById,
-    updateVideo
+    updateVideo,
+    deleteVideo
 }

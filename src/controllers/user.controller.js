@@ -234,6 +234,7 @@ const getCurrentUser=asyncHandler(async (req, res) =>{
     res.status(200)
     .json(
         new ApiResponse(200,{
+            _id:user._id,
             email:user.email,
             fullName:user.fullName,
             username:user.username,
@@ -289,7 +290,7 @@ const updateUserAvatar=asyncHandler(async(req, res)=>{
         throw new ApiError(400,"avatar file error in uploading in cloudinary")
     }
 
-    const deleteOldAvatar=deleteFromCloudinary(req.user?.avatar)
+    const deleteOldAvatar=deleteFromCloudinary(req.user?.avatar,"image")
     if (!deleteOldAvatar){
         console.log("error in deleting old avatar file");
     }
@@ -321,7 +322,7 @@ const updateUserCoverImage=asyncHandler(async(req, res)=>{
         throw new ApiError(400,"cover Image file error in uploading in cloudinary")
     }
 
-    const deleteOldCoverImage=deleteFromCloudinary(req.user?.coverImage)
+    const deleteOldCoverImage=deleteFromCloudinary(req.user?.coverImage,"image")
     if (!deleteOldCoverImage){
         console.log("error in deleting old cover image file");
     }
