@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { deleteVideo, getVideoById, postVideo, updateVideo, updateViewsCount } from "../controllers/video.controller.js";
+import { deleteVideo, getAllVideos, getVideoById, postVideo, updateVideo, updateViewsCount } from "../controllers/video.controller.js";
 
 const router=Router()
 router.use(verifyJwt)
@@ -18,6 +18,7 @@ router
             maxCount:1
         },
     ]), postVideo)
+    .get(getAllVideos)
 
 router
     .route("/:videoId")
