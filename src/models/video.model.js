@@ -1,6 +1,6 @@
 import mongoose,{Schema} from "mongoose";
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2'
-import { DB_NAME } from "../constants.js";
+import { DB_NAME } from "../../constants.js";
 
 const videoSchema=new Schema(
     {

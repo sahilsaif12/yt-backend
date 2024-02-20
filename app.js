@@ -14,14 +14,14 @@ app.use(express.static("public"))
 app.get('/',(req, res) => {
 
 //   console.log('Cookies: ', req.cookies)
-
-    res.send("sahil")
+    res.json({msg:"hello yt-stream backend is working"})
+    // res.send("sahil")
 })
 
 // importing routes
-import userRouter from './routes/user.route.js'
-import subscriptionRouter from './routes/subscription.route.js'
-import videoRouter from './routes/video.route.js'
+import userRouter from './src/routes/user.route.js'
+import subscriptionRouter from './src/routes/subscription.route.js'
+import videoRouter from './src/routes/video.route.js'
 
 app.use("/api/v1/users",userRouter)
 app.use("/api/v1/subscriptions",subscriptionRouter)
