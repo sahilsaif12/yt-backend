@@ -22,9 +22,11 @@ app.get('/',(req, res) => {
 import userRouter from './src/routes/user.route.js'
 import subscriptionRouter from './src/routes/subscription.route.js'
 import videoRouter from './src/routes/video.route.js'
+import playlistRouter from './src/routes/playlist.route.js'
 
 app.use("/api/v1/users",userRouter)
 app.use("/api/v1/subscriptions",subscriptionRouter)
 app.use("/api/v1/videos",videoRouter)
+app.use("/api/v1/playlists",playlistRouter)
 
 export default app
